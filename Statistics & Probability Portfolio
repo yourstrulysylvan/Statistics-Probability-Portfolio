@@ -1,0 +1,739 @@
+<title>Statistics Study Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: sticky tab bar over three views (roadmap, calculators, quiz). Roadmap is a vertical run of numbered topics; tools are cards in a responsive grid. */
+:root{
+  --bg:#F2F4F6; --surface:#FFFFFF; --ink:#16202A; --muted:#566370; --line:#D8DEE4;
+  --accent:#8C1D2F; --accent-ink:#FFFFFF; --soft:#F4E9EB;
+  --good:#1B7A4B; --good-soft:#E3F2EA; --bad:#B3261E; --bad-soft:#FBE7E5;
+  --chart:#8C1D2F; --chart2:#B8892B; --chart-fill:rgba(140,29,47,.26); --bardim:#C5CCD4;
+  --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --body:'IBM Plex Sans','Segoe UI',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121418; --surface:#1B1E24; --ink:#E8EAED; --muted:#9AA3AE; --line:#2C323A;
+  --accent:#E58A98; --accent-ink:#1B0A0E; --soft:#2A1B1F;
+  --good:#5CC28A; --good-soft:#172A21; --bad:#F08A82; --bad-soft:#321C1A;
+  --chart:#E58A98; --chart2:#D9B25C; --chart-fill:rgba(229,138,152,.32); --bardim:#3A414B; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#121418; --surface:#1B1E24; --ink:#E8EAED; --muted:#9AA3AE; --line:#2C323A;
+  --accent:#E58A98; --accent-ink:#1B0A0E; --soft:#2A1B1F;
+  --good:#5CC28A; --good-soft:#172A21; --bad:#F08A82; --bad-soft:#321C1A;
+  --chart:#E58A98; --chart2:#D9B25C; --chart-fill:rgba(229,138,152,.32); --bardim:#3A414B; color-scheme:dark;}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);
+  padding-block:0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+h1,h2,h3,h4{font-family:var(--display);margin:0;text-wrap:balance;line-height:1.15}
+p{margin:0}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--bg);border-bottom:1px solid var(--line)}
+.top-in{max-width:1040px;margin:0 auto;display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;justify-content:space-between;padding-block:10px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);font:700 18px var(--display)}
+.mark{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font:700 17px var(--display)}
+#nav{display:flex;flex-wrap:wrap;gap:4px}
+#nav a{padding:6px 12px;border-radius:999px;text-decoration:none;color:var(--muted);font-weight:500}
+#nav a[aria-current="page"]{background:var(--accent);color:var(--accent-ink)}
+#nav a:not([aria-current="page"]):hover{background:var(--soft);color:var(--accent)}
+
+main{max-width:1040px;margin:0 auto;padding-block:24px 56px}
+.view[hidden]{display:none!important}
+.eyebrow{font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.hero{display:flex;flex-wrap:wrap;gap:16px 40px;align-items:flex-end;justify-content:space-between;margin-bottom:28px}
+.hero h1{font-size:clamp(28px,5vw,44px);margin-top:6px}
+.hero p.lede{max-width:56ch;color:var(--muted);margin-top:10px}
+.overall{min-width:220px;flex:0 1 260px}
+.overall b{font:700 30px var(--display);font-variant-numeric:tabular-nums}
+.overall span{color:var(--muted)}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .25s}
+
+.topic{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:14px}
+.t-head{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center}
+.roman{font:700 34px var(--display);color:var(--accent);min-width:2.2ch}
+.t-title{flex:1 1 220px;min-width:0}
+.t-title h2{font-size:21px}
+.meta{font:400 13px var(--mono);color:var(--muted);margin-top:4px}
+.t-prog{flex:0 1 140px;min-width:110px;font:500 13px var(--mono);color:var(--muted)}
+.t-body{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:18px 28px;margin-top:16px}
+.t-body>div{min-width:0}
+.t-body h4{font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.checks{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.checks label{display:flex;gap:9px;align-items:flex-start;cursor:pointer}
+.checks input{margin-top:4px;accent-color:var(--accent);width:16px;height:16px;flex:none}
+.checks .letter{font:500 12px var(--mono);color:var(--muted);margin-top:3px;flex:none}
+.checks input:checked ~ .lt{color:var(--muted);text-decoration:line-through}
+ol.out-list{margin:0;padding-left:1.2em;display:grid;gap:6px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.tag{border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:13px;background:var(--bg)}
+.t-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.midterm{display:flex;align-items:center;gap:14px;margin:22px 0;font:500 13px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.midterm::before,.midterm::after{content:"";flex:1;border-top:2px dashed var(--accent);opacity:.5}
+
+.btn{display:inline-block;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);padding:8px 14px;border-radius:8px;font:600 14px var(--body);text-decoration:none;cursor:pointer}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.ghost:hover{background:var(--soft);filter:none}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0 20px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 12px;font:500 13px var(--body);cursor:pointer}
+.chip small{font:400 11px var(--mono);color:var(--muted);margin-left:4px}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chip[aria-pressed="true"] small{color:var(--accent-ink);opacity:.85}
+
+.tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:14px;align-items:start}
+.tool{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.tool[hidden]{display:none!important}
+.tool.full{grid-column:1/-1}
+.tool h3{font-size:18px}
+.hint{color:var(--muted);font-size:13.5px;margin:4px 0 12px}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;align-items:end;margin-bottom:12px}
+.f{display:grid;gap:4px;min-width:0}
+.f.wide{grid-column:1/-1}
+.f span{font-size:12.5px;color:var(--muted)}
+.f[hidden]{display:none!important}
+input,select,textarea{width:100%;min-width:0;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:16px var(--mono)}
+select{font-family:var(--body)}
+textarea{resize:vertical;line-height:1.5}
+.sub{font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 8px;padding-top:12px;border-top:1px solid var(--line)}
+.results{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:8px;margin-bottom:10px}
+.res{border:1px solid var(--line);border-radius:8px;padding:7px 10px;min-width:0;background:var(--bg)}
+.res span{display:block;font-size:12px;color:var(--muted)}
+.res b{font:500 16px var(--mono);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.res.key{background:var(--soft);border-color:var(--accent)}
+.res.key b{color:var(--accent)}
+.warn{color:var(--bad);font-size:14px}
+.steps{margin:8px 0 0;padding-left:1.2em;display:grid;gap:4px;font-size:13.5px;color:var(--muted)}
+.steps code,.note code{font-family:var(--mono);color:var(--ink)}
+.verdict{border-radius:8px;padding:10px 12px;font-weight:500;margin-top:6px}
+.verdict.rej{background:var(--bad-soft);color:var(--bad)}
+.verdict.keep{background:var(--good-soft);color:var(--good)}
+.note{font-size:13.5px;color:var(--muted);margin-top:6px}
+canvas{display:block;width:100%;height:190px;margin-top:6px}
+.tbl{overflow-x:auto;margin-bottom:8px}
+table{border-collapse:collapse;font:13px var(--mono);font-variant-numeric:tabular-nums;width:100%}
+th,td{border:1px solid var(--line);padding:5px 9px;text-align:right;white-space:nowrap}
+th{background:var(--bg);font-weight:500;color:var(--muted)}
+td:first-child,th:first-child{text-align:left}
+tfoot td{font-weight:500;background:var(--bg)}
+.idchips{display:flex;flex-wrap:wrap;gap:4px;max-height:150px;overflow:auto}
+.idchips span{font:13px var(--mono);border:1px solid var(--line);border-radius:6px;padding:1px 7px;background:var(--bg)}
+details summary{cursor:pointer;font:600 15px var(--body);color:var(--accent)}
+details .tbl{margin-top:10px;max-height:420px;overflow:auto}
+#ztable th:first-child,#ztable td:first-child{position:sticky;left:0;background:var(--bg)}
+
+.quiz{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;max-width:720px}
+.q-top{display:flex;justify-content:space-between;gap:10px;font:500 13px var(--mono);color:var(--muted);margin-bottom:12px}
+.q-text{font:600 20px var(--display);margin-bottom:16px;text-wrap:pretty}
+.opts{display:grid;gap:8px}
+.opt{display:flex;gap:10px;text-align:left;width:100%;padding:11px 13px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;font:15px var(--body);cursor:pointer}
+.opt b{font:500 13px var(--mono);color:var(--muted);margin-top:2px}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default}
+.opt.right{border-color:var(--good);background:var(--good-soft)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.explain{margin-top:14px;padding:12px 14px;border-radius:8px;background:var(--soft);font-size:14.5px}
+.q-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.score-big{font:700 44px var(--display);color:var(--accent)}
+
+@media (max-width:520px){.t-prog{flex-basis:100%}.quiz{padding:16px}.q-text{font-size:18px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="#roadmap"><span class="mark">σ</span><span>Statistics Study Lab</span></a>
+    <nav id="nav" aria-label="Sections">
+      <a href="#roadmap" data-view="roadmap">Roadmap</a>
+      <a href="#calculators" data-view="calculators">Calculators</a>
+      <a href="#quiz" data-view="quiz">Practice quiz</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<!-- ============ ROADMAP ============ -->
+<section id="view-roadmap" class="view">
+  <div class="hero">
+    <div>
+      <div class="eyebrow">Weeks 1–10 · 35 contact hours</div>
+      <h1>Statistics course roadmap</h1>
+      <p class="lede">Seven topics, from data basics to hypothesis testing. Tick each lesson when you finish it, then open the matching calculator or quiz.</p>
+    </div>
+    <div class="overall">
+      <b id="overall-n">0 / 28</b> <span>lessons done</span>
+      <div class="bar"><i id="overall-bar" style="width:0%"></i></div>
+    </div>
+  </div>
+  <div id="roadmap-list"></div>
+</section>
+
+<!-- ============ CALCULATORS ============ -->
+<section id="view-calculators" class="view" hidden>
+  <div class="eyebrow">One set of tools per topic</div>
+  <h1 style="font-size:clamp(26px,4.5vw,38px);margin-top:6px">Calculators</h1>
+  <div class="chips" id="calc-chips"></div>
+
+  <div class="tools">
+    <!-- Topic 1 -->
+    <article class="tool full" data-topic="1" id="t-freq">
+      <h3>Frequency table and histogram</h3>
+      <p class="hint">Paste raw scores. The class width follows Sturges' rule unless you enter your own.</p>
+      <div class="form">
+        <label class="f wide"><span>Data (separate with spaces or commas)</span>
+          <textarea id="freq-data" rows="3">62 75 81 58 90 67 72 85 78 69 74 88 65 71 79 83 60 77 70 92 68 73 80 76 84 66 91 64 82 87</textarea></label>
+        <label class="f"><span>Class width (blank = auto)</span><input id="freq-w" type="number" step="any" min="0" placeholder="auto"></label>
+      </div>
+      <div id="freq-out"></div>
+      <canvas id="freq-c" aria-label="Histogram of the data"></canvas>
+    </article>
+    <article class="tool" data-topic="1" id="t-samp">
+      <h3>Draw a sample</h3>
+      <p class="hint">Number the population 1 to N, then pick the members to survey.</p>
+      <div class="form">
+        <label class="f"><span>Population size N</span><input id="samp-N" type="number" min="2" max="1000000" value="500"></label>
+        <label class="f"><span>Sample size n</span><input id="samp-n" type="number" min="1" max="1000" value="25"></label>
+        <label class="f"><span>Method</span><select id="samp-m"><option value="srs">Simple random</option><option value="sys">Systematic</option></select></label>
+        <button class="btn" id="samp-go" type="button">Draw sample</button>
+      </div>
+      <div id="samp-out"></div>
+    </article>
+
+    <!-- Topic 2 -->
+    <article class="tool full" data-topic="2" id="t-desc">
+      <h3>Central tendency and dispersion</h3>
+      <p class="hint">Mean, median, mode, range, variance and standard deviation, with the working shown.</p>
+      <div class="form">
+        <label class="f wide"><span>Data</span><textarea id="desc-data" rows="2">12 15 11 18 15 20 14 15 17 13</textarea></label>
+      </div>
+      <div id="desc-out"></div>
+    </article>
+
+    <!-- Topic 3 -->
+    <article class="tool" data-topic="3" id="t-count">
+      <h3>Counting: n!, nPr, nCr</h3>
+      <p class="hint">Use permutations when order matters, combinations when it does not.</p>
+      <div class="form">
+        <label class="f"><span>n (total items)</span><input id="cnt-n" type="number" min="0" max="200" value="8"></label>
+        <label class="f"><span>r (chosen)</span><input id="cnt-r" type="number" min="0" max="200" value="3"></label>
+      </div>
+      <div id="cnt-out"></div>
+    </article>
+    <article class="tool" data-topic="3" id="t-rules">
+      <h3>Probability rules</h3>
+      <p class="hint">Enter P(A), P(B) and P(A and B).</p>
+      <div class="form">
+        <label class="f"><span>P(A)</span><input id="pr-a" type="number" step="any" min="0" max="1" value="0.5"></label>
+        <label class="f"><span>P(B)</span><input id="pr-b" type="number" step="any" min="0" max="1" value="0.4"></label>
+        <label class="f"><span>P(A and B)</span><input id="pr-ab" type="number" step="any" min="0" max="1" value="0.2"></label>
+      </div>
+      <div id="pr-out"></div>
+    </article>
+
+    <!-- Topic 4 -->
+    <article class="tool" data-topic="4" id="t-rv">
+      <h3>Discrete random variable</h3>
+      <p class="hint">One row per value: x, then P(x). Gives the mean and standard deviation.</p>
+      <div class="form">
+        <label class="f wide"><span>x, P(x) per line</span><textarea id="rv-data" rows="4">0, 0.2
+1, 0.5
+2, 0.3</textarea></label>
+      </div>
+      <div id="rv-out"></div>
+    </article>
+    <article class="tool" data-topic="4" id="t-binom">
+      <h3>Binomial distribution</h3>
+      <p class="hint">n independent trials, each with success probability p.</p>
+      <div class="form">
+        <label class="f"><span>n (trials)</span><input id="bn-n" type="number" min="1" max="100" value="10"></label>
+        <label class="f"><span>p (success)</span><input id="bn-p" type="number" step="any" min="0" max="1" value="0.3"></label>
+        <label class="f"><span>x (successes)</span><input id="bn-x" type="number" min="0" max="100" value="3"></label>
+      </div>
+      <div id="bn-out"></div>
+      <canvas id="bn-c" aria-label="Binomial probabilities"></canvas>
+    </article>
+    <article class="tool" data-topic="4" id="t-unif">
+      <h3>Continuous uniform distribution</h3>
+      <p class="hint">Every value between a and b is equally likely.</p>
+      <div class="form">
+        <label class="f"><span>a (min)</span><input id="un-a" type="number" step="any" value="0"></label>
+        <label class="f"><span>b (max)</span><input id="un-b" type="number" step="any" value="10"></label>
+        <label class="f"><span>P(c &lt; X &lt; d): c</span><input id="un-c" type="number" step="any" value="2"></label>
+        <label class="f"><span>d</span><input id="un-d" type="number" step="any" value="5"></label>
+      </div>
+      <div id="un-out"></div>
+    </article>
+
+    <!-- Topic 5 -->
+    <article class="tool full" data-topic="5" id="t-normal">
+      <h3>Normal distribution</h3>
+      <p class="hint">Standardize with z = (x − μ) / σ, then read the area under the curve.</p>
+      <div class="form">
+        <label class="f"><span>Mean μ</span><input id="nm-mu" type="number" step="any" value="70"></label>
+        <label class="f"><span>Standard deviation σ</span><input id="nm-sd" type="number" step="any" min="0" value="10"></label>
+        <label class="f"><span>Find</span><select id="nm-mode"><option value="below">P(X &lt; x₁)</option><option value="above">P(X &gt; x₁)</option><option value="between" selected>P(x₁ &lt; X &lt; x₂)</option></select></label>
+        <label class="f"><span>x₁</span><input id="nm-x1" type="number" step="any" value="60"></label>
+        <label class="f" id="nm-x2-wrap"><span>x₂</span><input id="nm-x2" type="number" step="any" value="85"></label>
+      </div>
+      <div id="nm-out"></div>
+      <canvas id="nm-c" aria-label="Normal curve with shaded area" style="height:220px"></canvas>
+      <div class="sub">Find x from a percentile</div>
+      <div class="form">
+        <label class="f"><span>Area to the left (0 to 1)</span><input id="nm-p" type="number" step="any" min="0.0001" max="0.9999" value="0.9"></label>
+      </div>
+      <div id="nm-inv"></div>
+    </article>
+    <article class="tool full" data-topic="5" id="t-ztable">
+      <details>
+        <summary>Standard normal table (Z-table)</summary>
+        <p class="hint" style="margin-top:8px">Each cell is P(Z &lt; z). Find the row for the first decimal, then the column for the second. For negative z, use P(Z &lt; −z) = 1 − P(Z &lt; z).</p>
+        <div class="tbl"><table id="ztable"></table></div>
+      </details>
+    </article>
+
+    <!-- Topic 6 -->
+    <article class="tool full" data-topic="6" id="t-clt">
+      <h3>Central Limit Theorem simulator</h3>
+      <p class="hint">Draw many samples from a population and plot each sample mean. The means pile up in a bell shape as n grows, even when the population does not.</p>
+      <div class="form">
+        <label class="f"><span>Population</span><select id="clt-pop"><option value="uni">Uniform (0 to 100)</option><option value="exp" selected>Right-skewed (exponential)</option><option value="bi">Two peaks (bimodal)</option></select></label>
+        <label class="f"><span>Sample size n</span><input id="clt-n" type="number" min="1" max="200" value="30"></label>
+        <label class="f"><span>Number of samples</span><input id="clt-k" type="number" min="50" max="5000" value="1000"></label>
+        <button class="btn" id="clt-go" type="button">Run again</button>
+      </div>
+      <div id="clt-out"></div>
+      <div class="sub">Population (4,000 random draws)</div>
+      <canvas id="clt-c1" aria-label="Population shape"></canvas>
+      <div class="sub">Distribution of the sample means</div>
+      <canvas id="clt-c2" aria-label="Distribution of sample means"></canvas>
+    </article>
+
+    <!-- Topic 7 -->
+    <article class="tool" data-topic="7" id="t-ci">
+      <h3>Confidence interval for a mean</h3>
+      <p class="hint">Point estimate ± margin of error.</p>
+      <div class="form">
+        <label class="f"><span>Sample mean x̄</span><input id="ci-x" type="number" step="any" value="72.5"></label>
+        <label class="f"><span>Std. deviation (s or σ)</span><input id="ci-s" type="number" step="any" min="0" value="8"></label>
+        <label class="f"><span>Sample size n</span><input id="ci-n" type="number" min="2" value="36"></label>
+        <label class="f"><span>Confidence %</span><input id="ci-c" type="number" step="any" min="50" max="99.9" value="95"></label>
+        <label class="f"><span>Use</span><select id="ci-type"><option value="t">t (σ unknown)</option><option value="z">z (σ known)</option></select></label>
+      </div>
+      <div id="ci-out"></div>
+    </article>
+    <article class="tool" data-topic="7" id="t-ht">
+      <h3>Hypothesis test for a mean</h3>
+      <p class="hint">Compare the sample mean with the claimed mean μ₀.</p>
+      <div class="form">
+        <label class="f"><span>Sample mean x̄</span><input id="ht-x" type="number" step="any" value="74.2"></label>
+        <label class="f"><span>Claimed mean μ₀</span><input id="ht-mu" type="number" step="any" value="70"></label>
+        <label class="f"><span>Std. deviation (s or σ)</span><input id="ht-s" type="number" step="any" min="0" value="9"></label>
+        <label class="f"><span>Sample size n</span><input id="ht-n" type="number" min="2" value="40"></label>
+        <label class="f"><span>Significance α</span><input id="ht-a" type="number" step="any" min="0.001" max="0.5" value="0.05"></label>
+        <label class="f"><span>Alternative H₁</span><select id="ht-tail"><option value="two">μ ≠ μ₀ (two-tailed)</option><option value="right" selected>μ &gt; μ₀ (right-tailed)</option><option value="left">μ &lt; μ₀ (left-tailed)</option></select></label>
+        <label class="f"><span>Use</span><select id="ht-type"><option value="t">t (σ unknown)</option><option value="z">z (σ known)</option></select></label>
+      </div>
+      <div id="ht-out"></div>
+    </article>
+  </div>
+</section>
+
+<!-- ============ QUIZ ============ -->
+<section id="view-quiz" class="view" hidden>
+  <div class="eyebrow">Check yourself</div>
+  <h1 style="font-size:clamp(26px,4.5vw,38px);margin-top:6px">Practice quiz</h1>
+  <div class="chips" id="quiz-chips"></div>
+  <div class="quiz" id="quiz-box"></div>
+</section>
+</main>
+
+<script>
+/* ---------- helpers ---------- */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const store={get(k,d){try{const v=localStorage.getItem('stats-lab-'+k);return v?JSON.parse(v):d}catch(e){return d}},
+             set(k,v){try{localStorage.setItem('stats-lab-'+k,JSON.stringify(v))}catch(e){}}};
+const fmt=(x,d=4)=>{if(x===null||x===undefined||!isFinite(x))return '—';const r=Number(x.toFixed(d));return Object.is(r,-0)?'0':String(r)};
+const fmtP=p=>p<0.0001?'< 0.0001':fmt(p,4);
+const nums=s=>s.split(/[\s,;]+/).filter(Boolean).map(Number).filter(Number.isFinite);
+const val=id=>parseFloat($('#'+id).value);
+const res=(l,v,key)=>`<div class="res${key?' key':''}"><span>${l}</span><b>${v}</b></div>`;
+const warn=m=>`<p class="warn">${m}</p>`;
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const cssVar=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+//#MATH-START
+function Phi(x){if(x<-8)return 0;if(x>8)return 1;let s=x,t=x,i=3,p;do{p=s;t*=x*x/i;s+=t;i+=2}while(s!==p);return 0.5+s*Math.exp(-x*x/2)/Math.sqrt(2*Math.PI)}
+function invPhi(p){let lo=-10,hi=10;for(let i=0;i<100;i++){const m=(lo+hi)/2;if(Phi(m)<p)lo=m;else hi=m}return (lo+hi)/2}
+function lgamma(x){const c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  if(x<0.5)return Math.log(Math.PI/Math.abs(Math.sin(Math.PI*x)))-lgamma(1-x);
+  x-=1;let a=c[0];const t=x+7.5;for(let i=1;i<9;i++)a+=c[i]/(x+i);
+  return 0.5*Math.log(2*Math.PI)+(x+0.5)*Math.log(t)-t+Math.log(a)}
+function betacf(a,b,x){const FP=1e-300;let qab=a+b,qap=a+1,qam=a-1,c=1,d=1-qab*x/qap;if(Math.abs(d)<FP)d=FP;d=1/d;let h=d;
+  for(let m=1;m<=300;m++){const m2=2*m;let aa=m*(b-m)*x/((qam+m2)*(a+m2));d=1+aa*d;if(Math.abs(d)<FP)d=FP;c=1+aa/c;if(Math.abs(c)<FP)c=FP;d=1/d;h*=d*c;
+    aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));d=1+aa*d;if(Math.abs(d)<FP)d=FP;c=1+aa/c;if(Math.abs(c)<FP)c=FP;d=1/d;const del=d*c;h*=del;if(Math.abs(del-1)<3e-12)break}
+  return h}
+function betai(x,a,b){if(x<=0)return 0;if(x>=1)return 1;
+  const bt=Math.exp(lgamma(a+b)-lgamma(a)-lgamma(b)+a*Math.log(x)+b*Math.log(1-x));
+  return x<(a+1)/(a+b+2)?bt*betacf(a,b,x)/a:1-bt*betacf(b,a,1-x)/b}
+function tCDF(t,df){const x=df/(df+t*t);const p=0.5*betai(x,df/2,0.5);return t>0?1-p:p}
+function tInv(p,df){let lo=-2000,hi=2000;for(let i=0;i<200;i++){const m=(lo+hi)/2;if(tCDF(m,df)<p)lo=m;else hi=m}return (lo+hi)/2}
+function binPmf(n,p,k){if(k<0||k>n)return 0;if(p===0)return k===0?1:0;if(p===1)return k===n?1:0;
+  return Math.exp(lgamma(n+1)-lgamma(k+1)-lgamma(n-k+1)+k*Math.log(p)+(n-k)*Math.log(1-p))}
+function fact(n){let r=1n;for(let i=2n;i<=BigInt(n);i++)r*=i;return r}
+//#MATH-END
+
+const bigStr=x=>{const s=x.toString();if(s.length>15)return `${s[0]}.${s.slice(1,5)} × 10^${s.length-1}`;return s.replace(/\B(?=(\d{3})+(?!\d))/g,',')};
+const randn=()=>{let u=0;while(u===0)u=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*Math.random())};
+
+/* ---------- canvas drawing ---------- */
+function setupCanvas(c){const dpr=window.devicePixelRatio||1;const w=c.clientWidth,h=c.clientHeight;
+  if(!w)return null;
+  if(c.width!==Math.round(w*dpr)||c.height!==Math.round(h*dpr)){c.width=Math.round(w*dpr);c.height=Math.round(h*dpr)}
+  const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);return {g,w,h}}
+const axisNum=v=>v>=10?String(Math.round(v)):fmt(v,2);
+function barChart(c,labels,vals,hl){
+  const S=setupCanvas(c);if(!S)return;const {g,w,h}=S;
+  const padL=36,padR=8,padT=10,padB=24;const max=Math.max(...vals,1e-9);
+  const muted=cssVar('--muted'),line=cssVar('--line'),c1=cssVar('--chart'),dim=cssVar('--bardim');
+  g.font='11px IBM Plex Mono, monospace';g.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=padT+(h-padT-padB)*(1-i/4);g.strokeStyle=line;g.beginPath();g.moveTo(padL,y);g.lineTo(w-padR,y);g.stroke();
+    g.fillStyle=muted;g.textAlign='right';g.fillText(axisNum(max*i/4),padL-5,y+4)}
+  const bw=(w-padL-padR)/vals.length;const step=Math.max(1,Math.ceil(vals.length/Math.floor((w-padL)/42)));
+  vals.forEach((v,i)=>{const bh=(h-padT-padB)*v/max;g.fillStyle=hl?(hl(i)?c1:dim):c1;
+    g.fillRect(padL+i*bw+Math.min(1,bw*.08),h-padB-bh,Math.max(1,bw-Math.min(2,bw*.16)),bh);
+    if(i%step===0){g.fillStyle=muted;g.textAlign='center';g.fillText(labels[i],padL+i*bw+bw/2,h-8)}})}
+function drawNormal(c,lo,hi,mu,sd){
+  const S=setupCanvas(c);if(!S)return;const {g,w,h}=S;
+  const padL=10,padR=10,padT=10,padB=40;
+  const X=z=>padL+(z+4)/8*(w-padL-padR),Y=y=>padT+(h-padT-padB)*(1-y/0.42);
+  const pdf=z=>Math.exp(-z*z/2)/Math.sqrt(2*Math.PI);
+  const a=Math.max(lo,-4),b=Math.min(hi,4);
+  if(b>a){g.beginPath();g.moveTo(X(a),Y(0));for(let z=a;z<b;z+=0.02)g.lineTo(X(z),Y(pdf(z)));g.lineTo(X(b),Y(pdf(b)));g.lineTo(X(b),Y(0));g.closePath();g.fillStyle=cssVar('--chart-fill');g.fill()}
+  g.beginPath();for(let z=-4;z<=4.0001;z+=0.02){const x=X(z),y=Y(pdf(z));if(z===-4)g.moveTo(x,y);else g.lineTo(x,y)}
+  g.strokeStyle=cssVar('--chart');g.lineWidth=2;g.stroke();
+  g.strokeStyle=cssVar('--line');g.lineWidth=1;g.beginPath();g.moveTo(padL,Y(0));g.lineTo(w-padR,Y(0));g.stroke();
+  g.font='11px IBM Plex Mono, monospace';g.textAlign='center';
+  for(let z=-3;z<=3;z++){g.fillStyle=cssVar('--ink');g.fillText((z<0?'−':'')+'z '+Math.abs(z),X(z),h-24);
+    if(isFinite(mu)&&isFinite(sd)){g.fillStyle=cssVar('--muted');g.fillText(fmt(mu+z*sd,1),X(z),h-8)}
+    g.beginPath();g.moveTo(X(z),Y(0));g.lineTo(X(z),Y(0)+4);g.stroke()}}
+
+/* ---------- topic data ---------- */
+const TOPICS=[
+ {id:1,roman:'I',short:'Intro',title:'Introduction to Statistics',weeks:'Weeks 1–2',hours:7,
+  subs:['Nature of Statistics','Types of Data and Variables','Sampling Techniques','Data Presentation'],
+  outcomes:['Identify the basic concepts of statistics.','Organize and present data appropriately.'],
+  methods:['Lecture','Guided Exercises'],assess:['Quiz','Seatwork']},
+ {id:2,roman:'II',short:'Averages & spread',title:'Measures of Central Tendency and Dispersion',weeks:'Weeks 3–4',hours:6,
+  subs:['Mean, Median, Mode','Range, Variance, Standard Deviation'],
+  outcomes:['Compute the measures of central tendency and dispersion.','Interpret statistical results.'],
+  methods:['Lecture','Problem Solving'],assess:['Problem Set','Quiz']},
+ {id:3,roman:'III',short:'Probability',title:'Probability',weeks:'Weeks 4–5',hours:5,
+  subs:['Basic Concepts','Probability Rules','Permutations and Combinations'],
+  outcomes:['Solve basic probability problems.','Apply counting techniques in probability.'],
+  methods:['Lecture','Practice Exercises'],assess:['Quiz','Seatwork']},
+ {id:4,roman:'IV',short:'Distributions',title:'Probability Distribution',weeks:'Weeks 5–6',hours:5,
+  subs:['Random Variable','Discrete and Continuous Distributions'],
+  outcomes:['Distinguish different probability distributions.','Solve simple probability distribution problems.'],
+  methods:['Lecture','Guided Problem Solving'],assess:['Long Quiz']},
+ {id:5,roman:'V',short:'Normal',title:'Normal Distribution',weeks:'Week 8',hours:4,
+  subs:['Characteristics of the Normal Distribution','Standard Normal Distribution (Z-distribution)','Z-Scores and Standardization','Using the Standard Normal Table (Z-table)','Applications of the Normal Distribution'],
+  outcomes:['Describe the characteristics of the normal distribution.','Solve problems involving the standard normal distribution.'],
+  methods:['Lecture-Discussion','Guided Problem Solving','Individual and Group Exercises'],assess:['Quiz','Seatwork']},
+ {id:6,roman:'VI',short:'Sampling & CLT',title:'Sampling Distribution and Central Limit Theorem',weeks:'Week 9',hours:4,
+  subs:['Population and Sample','Sampling Distribution of the Sample Mean','Standard Error of the Mean','Central Limit Theorem (CLT)','Applications of Sampling Distribution'],
+  outcomes:['Explain the concept of sampling distribution.','Apply the Central Limit Theorem in solving statistical problems.'],
+  methods:['Lecture-Discussion','Problem Solving','Collaborative Learning Activity'],assess:['Quiz','Worksheet']},
+ {id:7,roman:'VII',short:'Estimation & testing',title:'Estimation and Hypothesis Testing',weeks:'Week 10',hours:4,
+  subs:['Point Estimation','Confidence Intervals','Margin of Error','Null and Alternative Hypotheses','Level of Significance (α)','p-value and Decision Rule','One-tailed and Two-tailed Tests'],
+  outcomes:['Estimate population parameters using confidence intervals.','Perform and interpret hypothesis testing.'],
+  methods:['Lecture-Discussion','Case Analysis','Guided Problem Solving'],assess:['Problem Set','Long Quiz']}
+];
+const LET='ABCDEFG';
+let done=store.get('done',{});
+let calcTopic=store.get('calcTopic',1);
+let quizTopic=1;
+
+/* ---------- roadmap ---------- */
+function renderRoadmap(){
+  const el=$('#roadmap-list');let html='';
+  TOPICS.forEach(t=>{
+    if(t.id===5)html+='<div class="midterm">Midterm examination · Week 7</div>';
+    html+=`<article class="topic" id="topic-${t.id}">
+      <div class="t-head"><span class="roman">${t.roman}</span>
+        <div class="t-title"><h2>${t.title}</h2><p class="meta">${t.weeks} · ${t.hours} hours</p></div>
+        <div class="t-prog"><span id="tp-${t.id}"></span><div class="bar"><i id="tb-${t.id}" style="width:0%"></i></div></div></div>
+      <div class="t-body">
+        <div><h4>Lessons</h4><ul class="checks">${t.subs.map((s,i)=>`<li><label><input type="checkbox" data-k="${t.id}-${i}"${done[t.id+'-'+i]?' checked':''}><span class="letter">${LET[i]}</span><span class="lt">${s}</span></label></li>`).join('')}</ul></div>
+        <div><h4>By the end you can</h4><ol class="out-list">${t.outcomes.map(o=>`<li>${o}</li>`).join('')}</ol></div>
+        <div><h4>Teaching</h4><div class="tags">${t.methods.map(m=>`<span class="tag">${m}</span>`).join('')}</div>
+          <h4>Assessment</h4><div class="tags" style="margin:0">${t.assess.map(m=>`<span class="tag">${m}</span>`).join('')}</div></div>
+      </div>
+      <div class="t-links"><a class="btn" href="#calculators" data-go="${t.id}">Open calculators</a><a class="btn ghost" href="#quiz" data-go="${t.id}">Take the quiz</a></div>
+    </article>`});
+  el.innerHTML=html;updateProgress()}
+function updateProgress(){
+  let total=0,got=0;
+  TOPICS.forEach(t=>{const n=t.subs.length;const d=t.subs.filter((_,i)=>done[t.id+'-'+i]).length;total+=n;got+=d;
+    $('#tp-'+t.id).textContent=`${d} of ${n} done`;$('#tb-'+t.id).style.width=(d/n*100)+'%'});
+  $('#overall-n').textContent=`${got} / ${total}`;$('#overall-bar').style.width=(got/total*100)+'%'}
+$('#roadmap-list').addEventListener('change',e=>{const cb=e.target.closest('input[data-k]');if(!cb)return;
+  if(cb.checked)done[cb.dataset.k]=1;else delete done[cb.dataset.k];store.set('done',done);updateProgress()});
+$('#roadmap-list').addEventListener('click',e=>{const a=e.target.closest('a[data-go]');if(!a)return;
+  const id=+a.dataset.go;calcTopic=id;store.set('calcTopic',id);startQuiz(id);buildChips()});
+
+/* ---------- chips ---------- */
+function chipRow(el,items,cur,pick){
+  el.innerHTML=items.map(it=>`<button type="button" class="chip" aria-pressed="${it.id===cur}" data-id="${it.id}">${it.label}</button>`).join('');
+  el.onclick=e=>{const b=e.target.closest('.chip');if(!b)return;pick(b.dataset.id==='mixed'?'mixed':+b.dataset.id)}}
+function buildChips(){
+  chipRow($('#calc-chips'),TOPICS.map(t=>({id:t.id,label:`${t.roman} · ${t.short}`})),calcTopic,id=>{calcTopic=id;store.set('calcTopic',id);buildChips();showTools()});
+  const best=store.get('best',{});
+  chipRow($('#quiz-chips'),[...TOPICS.map(t=>({id:t.id,label:`${t.roman} · ${t.short}`+(best[t.id]!=null?`<small>${best[t.id]}%</small>`:'')})),{id:'mixed',label:'Mixed set of 10'+(best.mixed!=null?`<small>${best.mixed}%</small>`:'')}],quizTopic,id=>{startQuiz(id);buildChips()});
+  showTools()}
+function showTools(){$$('.tool').forEach(t=>t.hidden=+t.dataset.topic!==calcTopic);runAll()}
+
+/* ---------- tools ---------- */
+function runFreq(){
+  const out=$('#freq-out'),c=$('#freq-c');const d=nums($('#freq-data').value);
+  if(d.length<2){out.innerHTML=warn('Enter at least two numbers.');return}
+  const n=d.length,mn=Math.min(...d),mx=Math.max(...d),range=mx-mn,isInt=d.every(Number.isInteger);
+  const k=Math.ceil(1+3.322*Math.log10(n));
+  let w=parseFloat($('#freq-w').value);
+  if(!(w>0)){w=range===0?1:isInt?Math.max(1,Math.ceil(range/k)):Math.ceil(range/k*10)/10}
+  const nc=Math.floor(range/w+1e-9)+1;
+  if(nc>40){out.innerHTML=warn('That makes more than 40 classes. Use a wider class width.');return}
+  const f=new Array(nc).fill(0);d.forEach(v=>{f[Math.min(nc-1,Math.floor((v-mn)/w+1e-9))]++});
+  const intLab=isInt&&Number.isInteger(w);let cum=0;
+  const labs=f.map((_,i)=>{const lo=mn+i*w;return intLab?`${lo}–${lo+w-1}`:`${fmt(lo,2)} to <${fmt(lo+w,2)}`});
+  const rows=f.map((v,i)=>{cum+=v;return `<tr><td>${labs[i]}</td><td>${v}</td><td>${fmt(v/n*100,1)}%</td><td>${cum}</td></tr>`}).join('');
+  out.innerHTML=`<div class="results">${res('Values (n)',n)}${res('Smallest',fmt(mn))}${res('Largest',fmt(mx))}${res('Classes × width',`${nc} × ${fmt(w,2)}`)}</div>
+   <div class="tbl"><table><thead><tr><th>Class</th><th>Frequency</th><th>Relative</th><th>Cumulative</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td>Total</td><td>${n}</td><td>100%</td><td></td></tr></tfoot></table></div>`;
+  barChart(c,f.map((_,i)=>fmt(mn+i*w,1)),f)}
+
+function drawSample(){
+  const out=$('#samp-out');const N=Math.floor(val('samp-N')),n=Math.floor(val('samp-n')),m=$('#samp-m').value;
+  if(!(N>=2)||!(n>=1)||n>N||n>1000||N>1e6){out.innerHTML=warn('Use 2 ≤ N ≤ 1,000,000 and 1 ≤ n ≤ 1,000, with n not larger than N.');return}
+  let ids=[],note;
+  if(m==='srs'){const s=new Set();while(s.size<n)s.add(1+Math.floor(Math.random()*N));ids=[...s].sort((a,b)=>a-b);note='Simple random sampling: every member has the same chance of being picked.'}
+  else{const k=Math.floor(N/n),st=1+Math.floor(Math.random()*k);for(let i=0;i<n;i++)ids.push(st+i*k);note=`Systematic sampling: interval k = ⌊N / n⌋ = ${k}, random start = ${st}.`}
+  out.innerHTML=`<p class="note" style="margin:0 0 8px">${note}</p><div class="idchips">${ids.map(i=>`<span>${i}</span>`).join('')}</div>`}
+
+function runDesc(){
+  const out=$('#desc-out');const d=nums($('#desc-data').value);
+  if(d.length<2){out.innerHTML=warn('Enter at least two numbers.');return}
+  const n=d.length,sum=d.reduce((a,b)=>a+b,0),mean=sum/n,s=[...d].sort((a,b)=>a-b);
+  const med=n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2;
+  const fq=new Map();d.forEach(v=>fq.set(v,(fq.get(v)||0)+1));const mf=Math.max(...fq.values());
+  const modes=mf===1?null:[...fq].filter(([,f])=>f===mf).map(([v])=>v).sort((a,b)=>a-b);
+  const ss=d.reduce((a,v)=>a+(v-mean)**2,0),sv=ss/(n-1),sd=Math.sqrt(sv),pv=ss/n,psd=Math.sqrt(pv);
+  out.innerHTML=`<div class="results">${res('Mean x̄',fmt(mean),1)}${res('Median',fmt(med),1)}${res('Mode',modes?modes.map(v=>fmt(v)).join(', '):'none',1)}
+    ${res('Range',fmt(s[n-1]-s[0]))}${res('Sample SD (s)',fmt(sd),1)}${res('Sample variance s²',fmt(sv))}${res('Population SD (σ)',fmt(psd))}${res('Population variance σ²',fmt(pv))}
+    ${res('Count n',n)}${res('Sum Σx',fmt(sum))}${res('Σ(x − x̄)²',fmt(ss))}${res('Coefficient of variation',mean?fmt(sd/Math.abs(mean)*100,2)+'%':'—')}</div>
+    <ol class="steps"><li>Mean = Σx ÷ n = <code>${fmt(sum)} ÷ ${n} = ${fmt(mean)}</code></li>
+    <li>Median: sort the data, then take the middle value (or average the middle two). Sorted: <code>${s.map(v=>fmt(v)).join(' ')}</code></li>
+    <li>Sample variance = Σ(x − x̄)² ÷ (n − 1) = <code>${fmt(ss)} ÷ ${n-1} = ${fmt(sv)}</code>, so s = <code>${fmt(sd)}</code></li>
+    <li>Use n − 1 for a sample and n for a whole population.</li></ol>`}
+
+function runCount(){
+  const out=$('#cnt-out');const n=Math.floor(val('cnt-n')),r=Math.floor(val('cnt-r'));
+  if(!(n>=0)||!(r>=0)||n>200||r>n){out.innerHTML=warn('Use whole numbers with 0 ≤ r ≤ n ≤ 200.');return}
+  const P=fact(n)/fact(n-r),C=P/fact(r);
+  out.innerHTML=`<div class="results">${res(`${n}!`,bigStr(fact(n)))}${res(`Permutations ${n}P${r}`,bigStr(P),1)}${res(`Combinations ${n}C${r}`,bigStr(C),1)}</div>
+   <ol class="steps"><li><code>nPr = n! ÷ (n − r)!</code></li><li><code>nCr = n! ÷ (r! (n − r)!) = nPr ÷ r!</code></li></ol>`}
+
+function runRules(){
+  const out=$('#pr-out');const a=val('pr-a'),b=val('pr-b'),ab=val('pr-ab');
+  if([a,b,ab].some(v=>!(v>=0&&v<=1))){out.innerHTML=warn('Probabilities must be between 0 and 1.');return}
+  if(ab>Math.min(a,b)+1e-9||ab<Math.max(0,a+b-1)-1e-9){out.innerHTML=warn('P(A and B) cannot be larger than the smaller of P(A) and P(B), or smaller than P(A) + P(B) − 1.');return}
+  const un=a+b-ab,indep=Math.abs(a*b-ab)<1e-9,mx=ab===0;
+  out.innerHTML=`<div class="results">${res('P(A or B)',fmt(un),1)}${res('P(A | B)',b?fmt(ab/b):'—')}${res('P(B | A)',a?fmt(ab/a):'—')}${res('P(not A)',fmt(1-a))}${res('P(not B)',fmt(1-b))}${res('P(neither)',fmt(1-un))}</div>
+   <p class="note">Independent: <b>${indep?'yes':'no'}</b> (P(A) × P(B) = ${fmt(a*b)}). Mutually exclusive: <b>${mx?'yes':'no'}</b>.</p>
+   <ol class="steps"><li>Addition rule: <code>P(A or B) = P(A) + P(B) − P(A and B) = ${fmt(a)} + ${fmt(b)} − ${fmt(ab)}</code></li><li>Conditional: <code>P(A | B) = P(A and B) ÷ P(B)</code></li></ol>`}
+
+function runRV(){
+  const out=$('#rv-out');const rows=$('#rv-data').value.split('\n').map(l=>l.split(/[\s,;]+/).filter(Boolean).map(Number)).filter(r=>r.length>=2&&r.every(Number.isFinite));
+  if(rows.length<2){out.innerHTML=warn('Enter at least two lines like “1, 0.5”.');return}
+  const sp=rows.reduce((a,r)=>a+r[1],0);
+  if(rows.some(r=>r[1]<0||r[1]>1)){out.innerHTML=warn('Each P(x) must be between 0 and 1.');return}
+  const E=rows.reduce((a,r)=>a+r[0]*r[1],0),E2=rows.reduce((a,r)=>a+r[0]**2*r[1],0),V=E2-E*E;
+  const ok=Math.abs(sp-1)<1e-6;
+  out.innerHTML=(ok?'':warn(`The probabilities add to ${fmt(sp)}, not 1. A valid distribution must total exactly 1.`))+
+   `<div class="tbl"><table><thead><tr><th>x</th><th>P(x)</th><th>x·P(x)</th><th>x²·P(x)</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${fmt(r[0])}</td><td>${fmt(r[1])}</td><td>${fmt(r[0]*r[1])}</td><td>${fmt(r[0]**2*r[1])}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total</td><td>${fmt(sp)}</td><td>${fmt(E)}</td><td>${fmt(E2)}</td></tr></tfoot></table></div>
+   <div class="results">${res('Mean E(X)',fmt(E),1)}${res('Variance',fmt(V))}${res('Std. deviation',fmt(Math.sqrt(Math.max(V,0))),1)}</div>
+   <p class="note">Variance = E(X²) − [E(X)]² = ${fmt(E2)} − ${fmt(E*E)}.</p>`}
+
+function runBinom(){
+  const out=$('#bn-out'),c=$('#bn-c');const n=Math.floor(val('bn-n')),p=val('bn-p'),x=Math.floor(val('bn-x'));
+  if(!(n>=1&&n<=100)||!(p>=0&&p<=1)||!(x>=0&&x<=n)){out.innerHTML=warn('Use 1 ≤ n ≤ 100, 0 ≤ p ≤ 1 and 0 ≤ x ≤ n.');return}
+  const pm=Array.from({length:n+1},(_,k)=>binPmf(n,p,k));
+  const le=pm.slice(0,x+1).reduce((a,b)=>a+b,0),eq=pm[x];
+  out.innerHTML=`<div class="results">${res(`P(X = ${x})`,fmt(eq),1)}${res(`P(X ≤ ${x})`,fmt(le),1)}${res(`P(X < ${x})`,fmt(le-eq))}${res(`P(X ≥ ${x})`,fmt(1-le+eq))}${res(`P(X > ${x})`,fmt(1-le))}
+    ${res('Mean np',fmt(n*p))}${res('Variance npq',fmt(n*p*(1-p)))}${res('Std. deviation',fmt(Math.sqrt(n*p*(1-p))))}</div>`;
+  barChart(c,pm.map((_,i)=>String(i)),pm,i=>i===x)}
+
+function runUnif(){
+  const out=$('#un-out');const a=val('un-a'),b=val('un-b'),c=val('un-c'),d=val('un-d');
+  if(![a,b,c,d].every(Number.isFinite)||!(b>a)||!(d>=c)){out.innerHTML=warn('Use b greater than a, and d at least c.');return}
+  const lo=Math.max(a,c),hi=Math.min(b,d),p=Math.max(0,hi-lo)/(b-a);
+  out.innerHTML=`<div class="results">${res(`P(${fmt(c)} < X < ${fmt(d)})`,fmt(p),1)}${res('Mean (a + b) / 2',fmt((a+b)/2))}${res('Variance (b − a)² / 12',fmt((b-a)**2/12))}${res('Std. deviation',fmt((b-a)/Math.sqrt(12)))}${res('Height 1 / (b − a)',fmt(1/(b-a)))}</div>
+   <p class="note">For any continuous variable, P(X = exact value) = 0. Only intervals carry probability.</p>`}
+
+function runNormal(){
+  const out=$('#nm-out'),c=$('#nm-c'),mode=$('#nm-mode').value;
+  $('#nm-x2-wrap').hidden=mode!=='between';
+  const mu=val('nm-mu'),sd=val('nm-sd'),x1=val('nm-x1'),x2=val('nm-x2');
+  if(![mu,sd,x1].every(Number.isFinite)||!(sd>0)||(mode==='between'&&!Number.isFinite(x2))){out.innerHTML=warn('Enter μ, a positive σ, and the x values.');return}
+  const z1=(x1-mu)/sd,z2=(x2-mu)/sd;let p,lo,hi,txt;
+  if(mode==='below'){p=Phi(z1);lo=-Infinity;hi=z1;txt=`P(Z < ${fmt(z1,2)})`}
+  else if(mode==='above'){p=1-Phi(z1);lo=z1;hi=Infinity;txt=`P(Z > ${fmt(z1,2)})`}
+  else{lo=Math.min(z1,z2);hi=Math.max(z1,z2);p=Phi(hi)-Phi(lo);txt=`P(${fmt(lo,2)} < Z < ${fmt(hi,2)})`}
+  out.innerHTML=`<div class="results">${res('z for x₁',fmt(z1,3))}${mode==='between'?res('z for x₂',fmt(z2,3)):''}${res('Probability',fmtP(p),1)}${res('As a percent',fmt(p*100,2)+'%',1)}</div>
+   <p class="note"><code>z = (x − μ) / σ</code>, so the area is <code>${txt}</code>.</p>`;
+  drawNormal(c,lo,hi,mu,sd);
+  const pp=val('nm-p'),inv=$('#nm-inv');
+  if(!(pp>0&&pp<1)){inv.innerHTML=warn('Enter an area strictly between 0 and 1.')}
+  else{const z=invPhi(pp);inv.innerHTML=`<div class="results">${res('z score',fmt(z,3),1)}${res('x = μ + zσ',fmt(mu+z*sd,3),1)}</div>`}}
+
+function buildZ(){
+  let h='<thead><tr><th>z</th>'+Array.from({length:10},(_,j)=>`<th>${(j/100).toFixed(2).slice(1)}</th>`).join('')+'</tr></thead><tbody>';
+  for(let i=0;i<=34;i++){h+=`<tr><td>${(i/10).toFixed(1)}</td>`+Array.from({length:10},(_,j)=>`<td>${Phi(i/10+j/100).toFixed(4)}</td>`).join('')+'</tr>'}
+  $('#ztable').innerHTML=h+'</tbody>'}
+
+const POPS={uni:{mu:50,sd:100/Math.sqrt(12),draw:()=>Math.random()*100},
+            exp:{mu:20,sd:20,draw:()=>-20*Math.log(1-Math.random())},
+            bi:{mu:50,sd:Math.sqrt(925),draw:()=>(Math.random()<.5?20:80)+5*randn()}};
+let clt=null;
+function runCLT(){
+  const key=$('#clt-pop').value,P=POPS[key];const n=Math.floor(val('clt-n')),k=Math.floor(val('clt-k'));
+  if(!(n>=1&&n<=200)||!(k>=50&&k<=5000)){$('#clt-out').innerHTML=warn('Use 1 ≤ n ≤ 200 and 50 ≤ samples ≤ 5000.');return}
+  const means=[];for(let i=0;i<k;i++){let s=0;for(let j=0;j<n;j++)s+=P.draw();means.push(s/n)}
+  const pop=[];for(let i=0;i<4000;i++)pop.push(P.draw());
+  const mm=means.reduce((a,b)=>a+b,0)/k,osd=Math.sqrt(means.reduce((a,v)=>a+(v-mm)**2,0)/(k-1)),se=P.sd/Math.sqrt(n);
+  const bins=(arr,lo,hi,nb)=>{const f=new Array(nb).fill(0);arr.forEach(v=>{f[Math.max(0,Math.min(nb-1,Math.floor((v-lo)/(hi-lo)*nb)))]++});return f};
+  const mlo=P.mu-4*se,mhi=P.mu+4*se,nb=24;
+  clt={pf:bins(pop,0,100,nb),pl:Array.from({length:nb},(_,i)=>String(Math.round(i*100/nb))),
+       mf:bins(means,mlo,mhi,nb),ml:Array.from({length:nb},(_,i)=>fmt(mlo+i*(mhi-mlo)/nb,1))};
+  $('#clt-out').innerHTML=`<div class="results">${res('Population mean μ',fmt(P.mu,2))}${res('Population SD σ',fmt(P.sd,2))}${res('Standard error σ/√n',fmt(se,3),1)}${res('Mean of the sample means',fmt(mm,3),1)}${res('SD of the sample means',fmt(osd,3),1)}</div>
+   <p class="note">The mean of the sample means lands near μ, and their spread lands near σ/√n. Raise n and watch the bottom chart turn into a bell.</p>`;
+  drawCLT()}
+function drawCLT(){if(!clt)return;barChart($('#clt-c1'),clt.pl,clt.pf);barChart($('#clt-c2'),clt.ml,clt.mf)}
+
+function runCI(){
+  const out=$('#ci-out');const x=val('ci-x'),s=val('ci-s'),n=Math.floor(val('ci-n')),cl=val('ci-c'),type=$('#ci-type').value;
+  if(![x,s].every(Number.isFinite)||!(s>=0)||!(n>=2)||!(cl>=50&&cl<100)){out.innerHTML=warn('Enter x̄, a non-negative SD, n ≥ 2 and a confidence level from 50 to 99.9.');return}
+  const a=1-cl/100,crit=type==='z'?invPhi(1-a/2):tInv(1-a/2,n-1),se=s/Math.sqrt(n),me=crit*se;
+  out.innerHTML=`<div class="results">${res(type==='z'?'Critical z':`Critical t (df ${n-1})`,fmt(crit,3))}${res('Standard error',fmt(se,4))}${res('Margin of error',fmt(me,4),1)}${res('Lower limit',fmt(x-me,3),1)}${res('Upper limit',fmt(x+me,3),1)}</div>
+   <p class="note">We are ${fmt(cl,1)}% confident the population mean is between <b>${fmt(x-me,2)}</b> and <b>${fmt(x+me,2)}</b>.</p>
+   <ol class="steps"><li>Margin of error = critical value × s / √n = <code>${fmt(crit,3)} × ${fmt(se,4)}</code></li></ol>`}
+
+function runHT(){
+  const out=$('#ht-out');const x=val('ht-x'),mu=val('ht-mu'),s=val('ht-s'),n=Math.floor(val('ht-n')),a=val('ht-a'),tail=$('#ht-tail').value,type=$('#ht-type').value;
+  if(![x,mu,s].every(Number.isFinite)||!(s>0)||!(n>=2)||!(a>0&&a<1)){out.innerHTML=warn('Enter all values, with a positive SD, n ≥ 2 and 0 < α < 1.');return}
+  const se=s/Math.sqrt(n),st=(x-mu)/se,df=n-1,cdf=v=>type==='z'?Phi(v):tCDF(v,df),inv=q=>type==='z'?invPhi(q):tInv(q,df);
+  let p,crit,h1,words;
+  if(tail==='two'){p=2*(1-cdf(Math.abs(st)));crit='±'+fmt(inv(1-a/2),3);h1=`μ ≠ ${fmt(mu)}`;words='different from'}
+  else if(tail==='right'){p=1-cdf(st);crit=fmt(inv(1-a),3);h1=`μ > ${fmt(mu)}`;words='greater than'}
+  else{p=cdf(st);crit=fmt(inv(a),3);h1=`μ < ${fmt(mu)}`;words='less than'}
+  p=Math.min(1,Math.max(0,p));const rej=p<=a;
+  out.innerHTML=`<p class="note" style="margin:0 0 8px"><code>H₀: μ = ${fmt(mu)}   H₁: ${h1}</code></p>
+   <div class="results">${res(type==='z'?'Test statistic z':`Test statistic t (df ${df})`,fmt(st,3),1)}${res('p-value',fmtP(p),1)}${res('Critical value',crit)}${res('Standard error',fmt(se,4))}</div>
+   <div class="verdict ${rej?'rej':'keep'}">${rej?`p ≤ α, so reject H₀. At α = ${fmt(a,3)} the sample gives enough evidence that the mean is ${words} ${fmt(mu)}.`:`p > α, so fail to reject H₀. At α = ${fmt(a,3)} the sample does not give enough evidence that the mean is ${words} ${fmt(mu)}.`}</div>`}
+
+const RUNNERS={'t-freq':runFreq,'t-desc':runDesc,'t-count':runCount,'t-rules':runRules,'t-rv':runRV,'t-binom':runBinom,'t-unif':runUnif,'t-normal':runNormal,'t-ci':runCI,'t-ht':runHT};
+function runAll(){
+  $$('.tool').forEach(t=>{if(t.hidden)return;const f=RUNNERS[t.id];if(f)f()});
+  if(!$('#t-clt').hidden){if(!clt)runCLT();else drawCLT()}}
+Object.keys(RUNNERS).forEach(id=>{const el=$('#'+id);const f=RUNNERS[id];el.addEventListener('input',f);el.addEventListener('change',f)});
+$('#samp-go').addEventListener('click',drawSample);
+$('#clt-go').addEventListener('click',runCLT);
+['clt-pop','clt-n','clt-k'].forEach(id=>$('#'+id).addEventListener('change',runCLT));
+
+/* ---------- quiz ---------- */
+const QUIZ=[
+ {t:1,q:'Which type of variable is the number of students in a class?',o:['Nominal','Ordinal','Discrete quantitative','Continuous quantitative'],a:2,e:'Students are counted in whole numbers, so the variable is discrete quantitative.'},
+ {t:1,q:'Ratings of Poor, Fair, Good and Excellent are measured at which level?',o:['Nominal','Ordinal','Interval','Ratio'],a:1,e:'The categories have a natural order, but the gaps between them are not measured, so the level is ordinal.'},
+ {t:1,q:'You pick a random start, then survey every 5th name on a class list. Which sampling technique is this?',o:['Simple random','Stratified','Cluster','Systematic'],a:3,e:'Choosing every kth member after a random start is systematic sampling.'},
+ {t:1,q:'A school is split by year level, then students are randomly picked within every year level. Which technique is this?',o:['Stratified','Systematic','Convenience','Cluster'],a:0,e:'Dividing the population into groups and sampling from each group is stratified sampling.'},
+ {t:1,q:'Which display shows the shape of continuous data grouped into class intervals?',o:['Pie chart','Pictograph','Histogram','Line of best fit'],a:2,e:'A histogram draws touching bars over class intervals, which shows the shape of the data.'},
+ {t:2,q:'What is the mean of 4, 8, 6, 5 and 7?',o:['5','6','6.5','7'],a:1,e:'The sum is 30, and 30 ÷ 5 = 6.'},
+ {t:2,q:'What is the median of 3, 9, 5 and 7?',o:['5','7','6.5','6'],a:3,e:'Sorted: 3, 5, 7, 9. Average the middle two: (5 + 7) ÷ 2 = 6.'},
+ {t:2,q:'Find the mode of 2, 3, 3, 5, 7, 7, 7, 9.',o:['3','5','9','7'],a:3,e:'The value 7 appears three times, more than any other value.'},
+ {t:2,q:'What is the range of 12, 5, 20 and 9?',o:['11','15','20','8'],a:1,e:'Largest minus smallest: 20 − 5 = 15.'},
+ {t:2,q:'What is the population standard deviation of 2, 4, 4, 4, 5, 5, 7, 9?',o:['2','2.14','4','32'],a:0,e:'The mean is 5 and Σ(x − mean)² = 32. Population variance = 32 ÷ 8 = 4, so σ = 2. Dividing by n − 1 instead gives the sample SD, about 2.14.'},
+ {t:2,q:'Every score in a data set goes up by 10. What happens to the standard deviation?',o:['It goes up by 10','It doubles','It goes down by 10','It stays the same'],a:3,e:'Adding a constant shifts every value and the mean equally, so the spread does not change.'},
+ {t:3,q:'What is the probability of rolling an even number on a fair six-sided die?',o:['1/6','1/3','1/2','2/3'],a:2,e:'Three of the six faces (2, 4, 6) are even, so 3/6 = 1/2.'},
+ {t:3,q:'P(A) = 0.4 and P(B) = 0.3, and A and B are mutually exclusive. What is P(A or B)?',o:['0.12','0.70','0.10','0.30'],a:1,e:'For mutually exclusive events, add: 0.4 + 0.3 = 0.7.'},
+ {t:3,q:'A and B are independent with P(A) = 0.5 and P(B) = 0.2. What is P(A and B)?',o:['0.70','0.30','0.10','0.25'],a:2,e:'For independent events, multiply: 0.5 × 0.2 = 0.10.'},
+ {t:3,q:'In how many ways can 4 different books be arranged on a shelf?',o:['4','12','16','24'],a:3,e:'Order matters, so 4! = 4 × 3 × 2 × 1 = 24.'},
+ {t:3,q:'How many ways can a committee of 3 be chosen from 8 people?',o:['24','56','336','8'],a:1,e:'Order does not matter, so 8C3 = (8 × 7 × 6) ÷ (3 × 2 × 1) = 56.'},
+ {t:3,q:'P(A) = 0.5, P(B) = 0.4 and P(A and B) = 0.2. What is P(A or B)?',o:['0.9','0.7','0.1','0.2'],a:1,e:'Addition rule: 0.5 + 0.4 − 0.2 = 0.7.'},
+ {t:4,q:'The number of defective items in a batch of 50 is which kind of random variable?',o:['Discrete','Continuous','Neither','Both'],a:0,e:'It can only take counted values 0, 1, 2, …, 50, so it is discrete.'},
+ {t:4,q:'The height of a randomly chosen student is which kind of random variable?',o:['Discrete','Continuous','Categorical','Constant'],a:1,e:'Height can take any value in an interval, so it is continuous.'},
+ {t:4,q:'X takes the values 0, 1, 2 with probabilities 0.2, 0.5, 0.3. What is E(X)?',o:['1.0','1.5','1.1','2.0'],a:2,e:'E(X) = 0(0.2) + 1(0.5) + 2(0.3) = 1.1.'},
+ {t:4,q:'For a binomial with n = 5 and p = 0.5, what is P(X = 2)?',o:['0.2500','0.3125','0.4000','0.5000'],a:1,e:'5C2 × 0.5² × 0.5³ = 10 × 0.03125 = 0.3125.'},
+ {t:4,q:'What is the mean of a binomial distribution with n = 20 and p = 0.3?',o:['3','14','6','0.3'],a:2,e:'The mean is np = 20 × 0.3 = 6.'},
+ {t:4,q:'For a continuous random variable, what is P(X = a) for one exact value a?',o:['0','0.5','1','It depends on the density'],a:0,e:'Probability for a continuous variable is area under the curve, and a single point has no width, so its area is 0.'},
+ {t:5,q:'A score of 85 comes from a distribution with μ = 70 and σ = 5. What is its z-score?',o:['15','3','0.33','−3'],a:1,e:'z = (85 − 70) ÷ 5 = 3.'},
+ {t:5,q:'About what share of a normal distribution lies within 1 standard deviation of the mean?',o:['50%','95%','68%','99.7%'],a:2,e:'The empirical rule gives about 68%, 95% and 99.7% within 1, 2 and 3 standard deviations.'},
+ {t:5,q:'What is P(Z < 0) for the standard normal distribution?',o:['0','0.25','1','0.50'],a:3,e:'The curve is symmetric around 0, so half of the area lies to the left.'},
+ {t:5,q:'A z-score of −1.5 means the value is…',o:['1.5 standard deviations above the mean','1.5 standard deviations below the mean','1.5 units below the mean','15% below the mean'],a:1,e:'The sign gives the direction and the number gives the distance in standard deviations.'},
+ {t:5,q:'IQ scores have μ = 100 and σ = 15. About what percent of people score above 130?',o:['0.13%','5%','16%','2.3%'],a:3,e:'z = (130 − 100) ÷ 15 = 2, and P(Z > 2) ≈ 0.0228, about 2.3%.'},
+ {t:5,q:'What is P(Z > 1.96)?',o:['0.0250','0.0500','0.9750','0.1587'],a:0,e:'P(Z < 1.96) = 0.9750, so the upper tail is 1 − 0.9750 = 0.0250.'},
+ {t:6,q:'A population has σ = 12. What is the standard error of the mean for samples of n = 36?',o:['12','2','0.33','6'],a:1,e:'SE = σ ÷ √n = 12 ÷ 6 = 2.'},
+ {t:6,q:'What does the Central Limit Theorem say?',o:['The population always becomes normal','Every sample mean equals μ','The distribution of sample means approaches normal as n grows','Samples must come from a normal population'],a:2,e:'For large enough n, the sampling distribution of the mean is approximately normal, whatever the population shape.'},
+ {t:6,q:'If the sample size is multiplied by 4, what happens to the standard error of the mean?',o:['It doubles','It is cut in half','It quadruples','It stays the same'],a:1,e:'SE = σ ÷ √n, and √4 = 2, so the standard error is halved.'},
+ {t:6,q:'What is the mean of the sampling distribution of x̄?',o:['σ','σ ÷ √n','μ','The mean of one sample'],a:2,e:'The sample mean is an unbiased estimator, so the average of all sample means is the population mean μ.'},
+ {t:6,q:'A common rule of thumb for applying the CLT to a skewed population is…',o:['n ≥ 5','n ≥ 10','n ≥ 1000','n ≥ 30'],a:3,e:'Samples of about 30 or more usually give a close-to-normal sampling distribution.'},
+ {t:7,q:'x̄ = 50, σ = 10 and n = 100. What is the 95% confidence interval for μ?',o:['(40.2, 59.8)','(48.04, 51.96)','(49.02, 50.98)','(30, 70)'],a:1,e:'SE = 10 ÷ 10 = 1 and ME = 1.96 × 1 = 1.96, so the interval is 50 ± 1.96.'},
+ {t:7,q:'You raise the confidence level from 95% to 99% with everything else fixed. The interval becomes…',o:['Narrower','Wider','The same width','Shifted but the same width'],a:1,e:'A higher confidence level needs a larger critical value, which widens the margin of error.'},
+ {t:7,q:'The p-value is 0.03 and α = 0.05. What is the decision?',o:['Fail to reject H₀','Reject H₀','Accept H₀ as proven','Raise α'],a:1,e:'The rule is to reject H₀ when p ≤ α, and 0.03 ≤ 0.05.'},
+ {t:7,q:'What is a Type I error?',o:['Failing to reject a false H₀','Using the wrong sample','Rejecting H₀ when it is true','Making a calculation mistake'],a:2,e:'A Type I error is a false alarm. Its probability is the level of significance α.'},
+ {t:7,q:'The alternative hypothesis is H₁: μ > 50. This is a…',o:['Two-tailed test','Left-tailed test','Right-tailed test','Test with no tail'],a:2,e:'The rejection region sits in the upper (right) tail, so it is a right-tailed, one-tailed test.'},
+ {t:7,q:'With the same confidence level, a larger sample makes the margin of error…',o:['Wider','Narrower','The same','Biased'],a:1,e:'Margin of error = critical value × σ ÷ √n, so it shrinks as n grows.'}
+];
+const quiz={list:[],i:0,score:0,answered:false};
+function startQuiz(topic){
+  quizTopic=topic;let pool=QUIZ.filter(q=>topic==='mixed'||q.t===topic);pool=shuffle(pool.slice());if(topic==='mixed')pool=pool.slice(0,10);
+  quiz.list=pool;quiz.i=0;quiz.score=0;quiz.answered=false;renderQuiz()}
+function renderQuiz(){
+  const box=$('#quiz-box');
+  if(quiz.i>=quiz.list.length){
+    const pct=Math.round(quiz.score/quiz.list.length*100);const best=store.get('best',{});
+    const prev=best[quizTopic];if(prev==null||pct>prev){best[quizTopic]=pct;store.set('best',best)}
+    box.innerHTML=`<div class="eyebrow">Finished</div><div class="score-big">${quiz.score} / ${quiz.list.length}</div>
+      <p>${pct>=80?'Strong result. Try the mixed set next.':pct>=50?'Getting there. Review the explanations, then try again.':'Open the calculators for this topic, work a few examples, then try again.'}</p>
+      <div class="q-actions"><button class="btn" id="q-again" type="button">Try again</button><a class="btn ghost" href="#calculators" data-go="${quizTopic==='mixed'?calcTopic:quizTopic}">Open calculators</a></div>`;
+    $('#q-again').onclick=()=>startQuiz(quizTopic);buildChipsQuizOnly();return}
+  const q=quiz.list[quiz.i];
+  box.innerHTML=`<div class="q-top"><span>Question ${quiz.i+1} of ${quiz.list.length}</span><span>Score ${quiz.score}</span></div>
+    <div class="q-text">${q.q}</div><div class="opts">${q.o.map((o,i)=>`<button type="button" class="opt" data-i="${i}"><b>${'ABCD'[i]}</b><span>${o}</span></button>`).join('')}</div>
+    <div id="q-fb"></div><div class="q-actions" id="q-next" hidden><button class="btn" id="q-nbtn" type="button">${quiz.i===quiz.list.length-1?'See result':'Next question'}</button></div>`;
+  quiz.answered=false;
+  $$('.opt',box).forEach(b=>b.onclick=()=>{if(quiz.answered)return;quiz.answered=true;const i=+b.dataset.i;
+    $$('.opt',box).forEach(x=>{x.disabled=true;if(+x.dataset.i===q.a)x.classList.add('right')});
+    if(i===q.a)quiz.score++;else b.classList.add('wrong');
+    $('#q-fb').innerHTML=`<div class="explain"><b>${i===q.a?'Correct.':'Not quite.'}</b> ${q.e}</div>`;$('#q-next').hidden=false;$('#q-nbtn').focus()});
+  $('#q-nbtn').onclick=()=>{quiz.i++;renderQuiz()}}
+function buildChipsQuizOnly(){buildChips()}
+$('#quiz-box').addEventListener('click',e=>{const a=e.target.closest('a[data-go]');if(!a)return;const id=+a.dataset.go;calcTopic=id;store.set('calcTopic',id);buildChips()});
+
+/* ---------- router ---------- */
+function route(){
+  const h=(location.hash||'#roadmap').slice(1);const v=['roadmap','calculators','quiz'].includes(h)?h:'roadmap';
+  $$('.view').forEach(s=>s.hidden=s.id!=='view-'+v);
+  $$('#nav a').forEach(a=>{if(a.dataset.view===v)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+  if(v==='calculators')runAll();
+  window.scrollTo(0,0)}
+window.addEventListener('hashchange',route);
+let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(!$('#view-calculators').hidden)runAll()},120)});
+if(window.matchMedia){const mq=window.matchMedia('(prefers-color-scheme: dark)');const f=()=>{if(!$('#view-calculators').hidden)runAll()};if(mq.addEventListener)mq.addEventListener('change',f)}
+
+/* ---------- boot ---------- */
+buildZ();renderRoadmap();startQuiz(1);buildChips();drawSample();route();
+</script>
